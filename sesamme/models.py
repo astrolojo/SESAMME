@@ -12,6 +12,7 @@ import extinction, dust_extinction
 from dust_extinction.parameter_averages import G23
 from dust_extinction.averages import G03_LMCAvg, G03_SMCBar
 
+use_ext_law = 'CCM'
 
 
 def load_ssp_cube(file_name):
@@ -239,7 +240,7 @@ def get_model(theta, x, model_cube, ion_table, add_nebular = True):
     a log(metallicity) logZ, an E(B-V) value ebv, and an amplitude ampl.
     - FITS model cube model_cube, which defines the SSP grid to be sampled from
     - Table ion_table, which is used to compute the nebular continuum emission if necessary
-    - Boolean parameter add_nebular, which sets whether nebular continuum emission should be added to the stellar model.
+    - Boolean add_nebular, which sets whether nebular continuum emission should be added to the stellar model. Defaults to True.
     
     Output:
     - A reddened BPASS spectrum that is nearest to the proposed values of t, Z, ebv, and ampl.

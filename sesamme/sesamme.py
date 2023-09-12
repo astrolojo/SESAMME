@@ -26,12 +26,5 @@ plt.rcParams.update({'font.size': 12, 'font.weight': 'semibold', 'axes.labelsize
 import warnings
 
 
-
-# Set the number and dimensionality of the emcee walker ensemble
-# ndim MUST be set to 4
-nwalkers, ndim = 128, 4
-nsteps = 10000
-
-
 # Set the initial positions of the walker ensemble
 initial_pos = [7., -2.0, 0.2, -2.0] + ([0.1, 0.1, 0.1, 0.1] * np.random.randn(nwalkers, ndim))

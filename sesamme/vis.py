@@ -1,3 +1,45 @@
+### Manipulating arrays
+import numpy as np
+
+### Data visualization
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.lines import Line2D
+import corner
+from IPython.display import display, Math
+
+plt.rcParams.update({'font.size': 12, 'font.weight':'semibold'})
+
+### Referencing other parts of SESAMME
+from sesamme.mcmc import ndim
+from sesamme.models import get_model, nebular_continuum, apply_ext_law, use_ext_law
+
+
+#########################
+
+def print_stats(flat_samples):
+    """
+    Computes 16th, 50th, and 84th percentile values for the 4 variables and prints them in a friendly way.
+    
+    Inputs:
+    - Flattened MCMC chain flat_samples.
+    
+    Outputs:
+    - Display of formatted Math object.
+    """
+    global ndim
+
+    labels = ["log(age/yr)", r"log(Z/Z$_{\odot}$)", "E(B-V)", "log(A)"]
+
+    for i in range(ndim):
+        percentiles = np.percentile(flat_samples[:, i], [16, 50, 84])
+        q = np.diff(percentiles)
+        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+        txt = txt.format(percentiles[1], q[0], q[1], labels[i])
+        display(Math(txt))
+
+#########################
+
 def plot_samples(x, y, windowlist, flat_samples, add_nebular = True, plot_median = False, median_params = [7., -2., 0.0, 0.0], plot_random_draws = True, title = None, savefile = False, savefile_name = "example_fit"):
     """
     A plotting function for examining the goodness-of-fit for models in the final sampler object after the MCMC run.

@@ -1,13 +1,16 @@
 ### File and unit handling tools
 from astropy.table import Table
-
+import warnings
 
 ### Manipulating arrays
 import numpy as np
 import emcee
 
 
-import warnings
+
+
+### Referencing other parts of SESAMME
+import sesamme.models as models
 
 
 
@@ -19,6 +22,23 @@ nsteps = 10000
 
 # Set the initial positions of the walker ensemble
 initial_pos = [7., -2.0, 0.2, -2.0] + ([0.1, 0.1, 0.1, 0.1] * np.random.randn(nwalkers, ndim))
+
+#########################
+
+def set_chain_size(m):
+    """
+    Updates the number of steps (chain length) of the MCMC run. Default value is 10000.
+    
+    Inputs:
+    - Integer m. 
+
+    Output:
+    - Updated global variable nsteps; no returned value or object.
+    """
+
+    global nsteps
+    
+    nsteps = m
 
 #########################
 
@@ -160,8 +180,7 @@ def log_likelihood(y, yerr, y_model, mask):
     Inputs:
     - Flux array y, flux uncertainty array yerr
     - Model spectrum y_model, obtained with get_model()
-    - The BPASS SED wavelength grid rest_x, where dlambda = 1 Angstrom
-    - List of spectral windows to model windowlist, which is passed into function get_wavelength_bins()
+    - Mask array. Can be generated using the get_mask function or with user-made code.
     
     Output:
     - (-1 * log(likelihood)), where log(i) means the natural logarithm
@@ -190,7 +209,7 @@ def log_posterior(theta, x, y, yerr, model_cube, ion_table, mask, add_nebular):
     Output:
     - log(posterior probability), where log(i) means the natural logarithm
     """
-    y_model = get_model(theta, x, model_cube, ion_table, add_nebular)
+    y_model = models.get_model(theta, x, model_cube, ion_table, add_nebular)
     
     lp = log_prior(theta)
     if not np.isfinite(lp):
@@ -199,3 +218,51 @@ def log_posterior(theta, x, y, yerr, model_cube, ion_table, mask, add_nebular):
     ll = log_likelihood(y, yerr, y_model, mask)
     
     return lp + ll
+
+#########################
+
+def run_sesamme(filename, runname, x, y, yerr, model_cube, ion_table, mask, add_nebular=True):
+    """
+    Initiate an MCMC procedure and write the results to a file/extension name.
+    
+    Inputs:
+    - *.h5 file filename to write results to.
+    - Extension name runname, which stores the run in a separate section of the *.h5 file
+    - Wavelength array x
+    - Flux and flux uncertainty arrays y and yerr
+    - SSP model cube model_cube and accompanying ionizing photon output table ion_table.
+    - Mask array. Can be generated using the get_mask function or with user-made code.
+    - Boolean add_nebular, which sets whether nebular continuum emission should be added to the stellar model. Defaults to True.
+    
+    Output:
+    - log(posterior probability), where log(i) means the natural logarithm
+    """
+
+    global nwalkers, nsteps, ndim
+    global initial_pos
+
+    print("Active extinction law = "+models.use_ext_law + "; Ensemble size = "+str(nwalkers) + 
+         "; Chain length = "+str(nsteps))
+    yesno = input("Begin a SESAMME run with these parameters? (y/n)  ")
+    
+    if yesno in ['n', 'no', 'N', 'NO']:
+        print("Run canceled.")
+        return
+    
+    elif yesno in ['y', 'Y', 'yes', 'YES']:
+        backend = emcee.backends.HDFBackend(filename, name = runname)
+        backend.reset(nwalkers, ndim)
+        
+        sampler = emcee.EnsembleSampler(
+            nwalkers, ndim, log_posterior, backend = backend, args=(x, y, yerr, 
+                                                  model_cube, ion_table, mask, add_nebular)
+        )
+        
+        sampler.run_mcmc(initial_pos, nsteps, progress=True);
+        
+        print(
+            "Mean acceptance fraction: {0:.3f}".format(np.mean(sampler.acceptance_fraction))
+        )
+        
+    else:
+        print("\n Unknown response. Please use y / yes / Y / YES to begin or n / no / N / NO to change your mind.")
