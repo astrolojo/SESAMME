@@ -114,10 +114,14 @@ def _ingest_model_grid(model_cube):
 ### Round to the nearest log(age) and log(metallicity) that is precomputed in the input SSP suite.
 
 def _nearest_age(logt):
+    global age_dict
+
     best_t_key, best_t = min(age_dict.items(), key=lambda x: abs(logt - x[1]))
     return best_t_key, best_t
 
 def _nearest_metallicity(logZ):
+    global metal_dict
+
     Z = 10**logZ
     best_Z_key, best_Z = min(metal_dict.items(), key=lambda x: abs(Z - x[1]))
     return best_Z_key, best_Z
