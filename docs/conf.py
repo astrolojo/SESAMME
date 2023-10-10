@@ -53,7 +53,7 @@ extensions = ['sphinx.ext.duration',
 'sphinx.ext.doctest',
 'sphinx.ext.autodoc',
 'sphinx.ext.autosummary',
-'sphinxcontrib.napoleon'
+'sphinx.ext.napoleon'
 ]
 
 
