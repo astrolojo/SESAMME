@@ -21,12 +21,14 @@ def print_stats(flat_samples):
     """
     Computes 16th, 50th, and 84th percentile values for the 4 variables and prints them in a friendly way.
     
-    Inputs:
-    - Flattened MCMC chain flat_samples.
+    Parameters
+    ----------
+    flat_samples : numpy.ndarray
+        Flattened MCMC chain flat_samples.
     
-    Outputs:
-    - Display of formatted Math object.
+
     """
+
     global ndim
 
     labels = ["log(age/yr)", r"log(Z/Z$_{\odot}$)", "E(B-V)", "log(A)"]
@@ -44,21 +46,32 @@ def plot_samples(x, y, windowlist, flat_samples, add_nebular = True, plot_median
     """
     A plotting function for examining the goodness-of-fit for models in the final sampler object after the MCMC run.
     
-    Inputs:
-    - Wavelength array x.
-    - Flux array y.
-    - List of masked regions windowlist.
-    - Flattened MCMC chain flat_samples.
-    - Boolean add_nebular, optional. Determines whether to include a nebular continuum component when 
-    plotting models. Default is True.
-    - Boolean plot_median, optional. Determines whether to plot a single model (usually some sort of best-fit).
-    Default is False.
-    - List-like or array-like median_params, optional. 
-    - Boolean plot_random_draws, optional. Default is True.
-    - String title to give a title to the plot, optional. Default is None.
-    - Boolean savefile, optional. Default is False.
-    - String savefile_name, optional. Specify output file name if savefile set to True. 
+    Parameters
+    ----------
+    x : array-like
+        Wavelength array
+    y : array-like
+        Flux array
+    windowlist : list or array
+        List of regions to mask
+    flat_samples : np.ndarray
+        Flattened MCMC chain
+    add_nebular : Boolean
+        Determines whether to include nebular continuum emission in plotted models; optional.
+    plot_median : Boolean
+        Determines whether to plot a single model as a "best fit", usually with posterior medians; optional.
+    median_params : list or array
+        Model parameters for plot_median; optional.
+    plot_random_draws : Boolean
+        Generates and plots 50 random curves sampled from the flattened MCMC chain; optional.
+    title : str
+        Set figure title; optional
+    savefile : Boolean
+        Determines whether to save figure to file; optional
+    savefile_name : str
+        Output file name if savefile set to True; optional
     """
+
     
     fig, ax = plt.subplots(2, 1, sharex=True, figsize=(10,6), gridspec_kw={'height_ratios': [3, 1]})
 
