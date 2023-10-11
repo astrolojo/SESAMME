@@ -11,6 +11,7 @@ API
 Statistical machinery
 *********************
 
-.. automodapi:: sesamme.mcmc
+.. automodule: sesamme.mcmc
 
-.. automodapi:: sesamme.vis
+.. automodule: sesamme.vis
+    :members:
