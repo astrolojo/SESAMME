@@ -20,11 +20,15 @@ def load_ssp_cube(file_name):
     Loads in the SSP model cube.
     Implicitly alters the model grid to be sampled with emcee through _ingest_model_grid().
 
-    Inputs:
-    - File path and name file_name. 
+    Parameters
+    ----------
+    file_name : str
+        File path and name
 
-    Outputs:
-    - FITS HDUList object containing the SSP models (for load_ssp_cube())
+    Returns
+    -------
+    model_cube : FITS
+        Multi-extension FITS cube containing SSP models
     """
 
     model_cube = fits.open(file_name)
@@ -37,11 +41,15 @@ def load_ionization_table(file_name):
     """
     Loads in the table of ionizing photon outputs per SSP associated with a model cube.
 
-    Inputs:
-    - File path and name file_name. 
+    Parameters
+    ----------
+    file_name : str
+        File path and name
 
-    Outputs:
-    - An astropy Table object containing the ionizing photon outputs per SSP 
+    Returns
+    -------
+    ion_table : astropy Table
+        Table object containing ionizing fluxes per SSP
     """
 
     ion_table = Table.read(file_name, format='ascii', header_start=0)
@@ -55,11 +63,15 @@ def _interpret_metallicity_keys(model_cube):
     """
     Interprets the FITS extension names of the model cube to create the numerical metallicity grid. 
 
-    Inputs:
-    - *.fits data cube model_cube
+    Parameters
+    ----------
+    model_cube : FITS
+        Multi-extension FITS cube containing SSP models
 
-    Outputs:
-    - List of metallicity values included in the model cube
+    Returns
+    -------
+    metal_values : list
+        List of metallicity values describing the model cube
     """
 
     metal_keys = [model_cube[k].header['EXTNAME'] for k in range(1, len(model_cube))]
@@ -85,14 +97,13 @@ def _interpret_metallicity_keys(model_cube):
 
 def _ingest_model_grid(model_cube):
     """
-    Creates the metallicity and age dictionaries that are needed to translate between MCMC samples and
-    discrete Z+age combos that exist in the model cube.
+    Creates the metallicity and age dictionaries that are needed to translate between MCMC samples and discrete age+Z combos that exist in the model cube.
 
-    Inputs:
-    - *.fits data cube model_cube
 
-    Outputs:
-    - Dictionaries of permissible values of metallicity and log(age).
+    Parameters
+    ----------
+    model_cube : FITS
+        Multi-extension FITS cube containing SSP models
     """
 
     global metal_dict, age_dict
@@ -114,12 +125,45 @@ def _ingest_model_grid(model_cube):
 ### Round to the nearest log(age) and log(metallicity) that is precomputed in the input SSP suite.
 
 def _nearest_age(logt):
+    """
+    Rounds the input value of log(age) to the nearest value in the current model grid.
+
+
+    Parameters
+    ----------
+    logt : float
+        Log of cluster age in yr
+
+    Returns
+    -------
+    best_t_key : str
+        Dict key for nearest age
+    best_t : float
+        Dict value for nearest age
+    """
     global age_dict
 
     best_t_key, best_t = min(age_dict.items(), key=lambda x: abs(logt - x[1]))
     return best_t_key, best_t
 
 def _nearest_metallicity(logZ):
+    """
+    Rounds the input value of log(Z) to the nearest value in the current model grid.
+
+
+    Parameters
+    ----------
+    logZ : float
+        Log of stellar metallicity
+
+    Returns
+    -------
+    best_Z_key : str
+        Dict key for nearest metallicity
+    best_Z : float
+        Dict value for nearest metallicity
+    """
+
     global metal_dict
 
     Z = 10**logZ
@@ -130,16 +174,21 @@ def _nearest_metallicity(logZ):
 
 def get_mask(windowlist, x):
     """
-    Define one or more subsets of wavelength space to ignore when performing the data-model comparison
-    (e.g., sky or geocoronal lines, ISM features).
-    Inputs:
-    - An Nx2 array windowlist, where each row specifies a wavelength window where weight = 0, and 
-    the first and second columns respectively give the approximate lower and upper bounds of the
-    window. The actual bounds will be chosen from the nearest values in the actual wavelength array.
-    - Wavelength array x, defined by the spectrum being tested.
-    
-    Output:
-    - An array of weights (1 = use in fit, 0 = do not use in fit) to be applied when evaluating log(likelihood).
+    Define one or more subsets of wavelength space to ignore when performing the data-model comparison (e.g., sky or geocoronal lines, ISM features).
+
+    Each row in the input ``windowlist`` specifies a wavelength window where weight = 0 during the fitting, and the first and second columns respectively give the approximate lower and upper bounds of the window(s). The actual bounds will be chosen from the nearest values in the wavelength array.
+
+    Parameters
+    ----------
+    windowlist : np.ndarray
+       N x 2 array. 
+    x : array-like
+        Wavelength array
+
+    Returns
+    -------
+    mask_array : np.ndarray
+        Array of bools (1 = use in fit, 0 = do not use)
     """
 
     mask_array = np.ones(len(x))
@@ -160,13 +209,19 @@ def get_mask(windowlist, x):
 
 def set_ext_law(ext_curve):
     """
-    Sets the extinction curve used to redden and attenuate model spectra. 
-    
-    Inputs:
-    - String ext_curve. Must match an extinction curve in SESAMME's library.
-    
-    Output:
-    - None, but updates the value of the global variable `use_ext_law`
+    Sets the curve used to extinguish model spectra. 
+
+    Currently implemented options for extinction curves include 5 Milky Way-like curves (CCM, Fitzpatrick99, ODonnell, FitzMassa07, Gordon23), a starburst galaxy curve (Calzetti), an LMC-like curve (LMC), and an SMC-like curve (SMC).
+
+    Parameters
+    ----------
+    ext_curve : str
+        Name of extinction curve. Must match an implemented option in SESAMME's library.
+
+    Raises
+    ------
+    ValueError
+        String ext_curve is not in the list of allowable values
     """ 
     
     global use_ext_law
@@ -186,13 +241,25 @@ def apply_ext_law(x, ebv, y_model):
     """
     Redden a model spectrum for comparison with the data. 
     
-    Inputs:
-    - Wavelength array x
-    - Degree of reddening ebv, which is translated to A_v under the hood
-    - The model spectrum flux array y_model
-    
-    Output:
-    - An extinguished model spectrum red_model
+    Parameters
+    ----------
+    x : array-like
+        Wavelength array
+    ebv : float
+        Value of E(B-V) by which to redden the model
+    y_model : np.ndarray
+        Flux array of the model spectrum; may be purely stellar or stellar + nebular continuum
+
+    Returns
+    -------
+    red_model : array-like
+        Extinguished SSP or SSP+nebular model
+
+    Raises
+    ------
+    ValueError
+        String use_ext_law is not in the list of allowable values
+
     """    
     
     if use_ext_law not in ['CCM', 'Fitzpatrick99', 'ODonnell', 'FitzMassa07', 'Gordon23',
@@ -233,21 +300,25 @@ Accepted values are 'CCM', 'Fitzpatrick99', 'ODonnell', 'FitzMassa07', 'Gordon23
 
 def get_model(theta, x, model_cube, ion_table, add_nebular = True):
     """
-    Construct a model star cluster spectrum with values of metallicity, age, extinction, and normalization
-    randomly chosen (within bounds). Choose the model nearest to the age and metallicity 
-    parameters Z and t, rescale by ampl, then redden by the extinction parameter ebv.
-    Default is to use the Cardelli, Clayton, & Mathis (1989) Milky Way reddening law, set with the variable
-    "use_ext_law".
-    
-    Inputs:
-    - A 4-tuple or 4-element list/array theta containing, in order, a log(age) logt, 
-    a log(metallicity) logZ, an E(B-V) value ebv, and an amplitude ampl.
-    - FITS model cube model_cube, which defines the SSP grid to be sampled from
-    - Table ion_table, which is used to compute the nebular continuum emission if necessary
-    - Boolean add_nebular, which sets whether nebular continuum emission should be added to the stellar model. Defaults to True.
-    
-    Output:
-    - A reddened BPASS spectrum that is nearest to the proposed values of t, Z, ebv, and ampl.
+    Construct a model star cluster spectrum with values of metallicity, age, extinction, and normalization randomly chosen (within bounds).
+
+    Choose the model nearest to the age and metallicity parameters Z and t, rescale by ampl, then redden by the extinction parameter ebv. If add_nebular is set to True, this is added before rescaling and extinction.
+
+    Parameters
+    ----------
+    theta : list or np.ndarray
+        Array containing, in order, a log(age) logt, a log(metallicity) logZ, an E(B-V) value ebv, and an amplitude log(ampl).
+    model_cube : FITS
+        Multi-extension FITS cube containing SSP models
+    ion_table : astropy Table
+        Table object containing ionizing fluxes per SSP
+    add_nebular : Boolean
+        Determines whether to add nebular continuum emission to a model
+
+    Returns
+    -------
+    red_nearest_model : array-like
+        Extinguished and rescaled SSP or SSP+nebular model spectrum with age and metallicity values nearest to the inputs. 
     """
     
     logt, logZ, ebv, ampl = theta
@@ -285,19 +356,22 @@ sparse_nebcont = (2.998e18 * gamma * 10**(Qbase)) / (alpha_B * nebx**2)
 def nebular_continuum(x, theta, ion_table):
     """
     Python equivalent of the Starburst99 function CONTINUUM, for computing the approximate nebular continuum.
-    Variable 'gamma' contains emission coeffs for HI (including free-free, bound-free, and 2-photon emission)
-    and HeI (assuming He/H = 0.1). Values from Aller (1984) and Ferland (1980). All computations assume 
-    typical Case B conditions (T = 1e4 K,  f_esc = 0).
+    
+    Variable 'gamma' contains emission coeffs for HI (including free-free, bound-free, and 2-photon emission) and HeI (assuming He/H = 0.1). Values from Aller (1984) and Ferland (1980). All computations assume typical Case B conditions (T = 1e4 K,  f_esc = 0).
 
-    Inputs:
-    - A 4-tuple or 4-element list/array theta containing, in order, a log(age) logt, 
-    a log(metallicity) logZ, an E(B-V) value ebv, and an amplitude ampl.
-    - A table of ionizing photon production rates ion_table
+    Parameters
+    ----------
+    x : array-like
+        Wavelength array
+    theta : list or np.ndarray
+        Array containing, in order, a log(age) logt, a log(metallicity) logZ, an E(B-V) value ebv, and an amplitude log(ampl).
+    ion_table : astropy Table
+        Table object containing ionizing fluxes per SSP
 
-    Output:
-    - A rough nebular continuum spectrum (in Solar luminosities per A), bounded in wavelength
-    by the wavelength coverage of the model cube
-
+    Returns
+    -------
+    interp_nebcont : np.ndarray
+        Approximate rescaled nebular continuum spectrum in Solar luminosities per A.
     """
 
     logt, logZ, _, ampl = theta
