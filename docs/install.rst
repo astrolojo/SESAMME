@@ -8,17 +8,13 @@ From source
 ``SESAMME`` can be installed from the source code in the normal
 Python fashion after downloading it from the git repo::
 
-    pip install -e .
+    python setup.py install
 
 Using pip
 =========
 
-``SESAMME`` can also be installed using pip::
+``SESAMME`` will be installable through PyPI (pip) no later than Oct 20, 2023. In the meantime, you can also install using pip from the GitHib repository::
 
     # from the main branch of the repository
     pip install git+https://github.com/astrolojo/SESAMME.git
 
-If you get an error that is includes `SSLError(SSLCertVerificationError`, the
-following command may work to remove this error::
-
-    pip install --trusted-host=pypi.org --trusted-host=files.pythonhosted.org git+https://github.com/astrolojo/SESAMME.git

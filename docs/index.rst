@@ -12,7 +12,7 @@ User Documentation
 ==================
 
 .. note::
-	This documentation is under active development
+	This documentation is under active development. Please check back regularly for new updates!
 
 .. toctree::
    :maxdepth: 2

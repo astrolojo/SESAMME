@@ -8,10 +8,20 @@ API
    sesamme.models
    sesamme.vis
 
-Statistical machinery
-*********************
+Statistical machinery (sesamme.mcmc)
+------------------------------------
 
-.. automodule: sesamme.mcmc
+.. automodule:: sesamme.mcmc
+    :members:
 
-.. automodule: sesamme.vis
+Model generation (sesamme.models)
+------------------------------------
+
+.. automodule:: sesamme.models
+    :members:
+
+Data visualization (sesamme.vis)
+--------------------------------
+
+.. automodule:: sesamme.vis
     :members:
