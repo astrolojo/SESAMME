@@ -3,22 +3,6 @@ Extinction in SESAMME
 #####################
 
 
-
-.. py:function:: apply_red_law(x, ebv, y_model)
-
-
-   Redden a model spectrum for comparison with data. 
-
-   :param x: Model wavelength grid.
-   :type x: np.ndarray
-   :param ebv: Reddening E(B-V) in magnitudes. 
-   :type ebv: float
-   :param y_model: Zero-extinction SSP model, arbitrary units.
-   :type y_model: np.ndarray
-   :return: Extinguished model spectrum in same units as y_model
-   :rtype: np.ndarray
-
-
 Eight extinction curves are currently implemented for ``SESAMME``. All are implemented using either the ``extinction`` package by K. Barbary (`<https://extinction.readthedocs.io/en/latest/index.html>`_) or the ``dust_extinction`` package by K. Gordon (`<https://dust-extinction.readthedocs.io/en/stable/index.html>`_).
 
 +----------------+-------------+---------------+---------------------------------------------------------------------+-------------------------+
@@ -47,6 +31,8 @@ Parameterizing Extinction
 =========================
 
 Although the ``SESAMME`` acronym lists extinction as one of the four variables it models, it is more accurate to say that it samples the line-of-sight *reddening* |EBV|, which can then be translated to an extinction or attenuation |AV| after the fact. This conversion from |EBV| to |AV| depends on the chosen extinction curve and hence the assumed value of |RV|.
+
+For details on how ``SESAMME`` applies reddening values to spectra, see the :ref:`model_gen` section of the API.
 
 .. |EBV| replace:: :math:`E(B-V)`
 .. |AV| replace:: :math:`A_V`
