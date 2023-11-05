@@ -12,13 +12,13 @@ build:
   tools:
     python: "3.7"
 
-#python:
-#  version: 3.7
-#  install:
-#    - method: pip
-#      path: .
-#      extra_requirements:
-#        - docs
+python:
+  version: 3.7
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
 
 formats: []
 
